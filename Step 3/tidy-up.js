@@ -12,7 +12,30 @@ for (let index = 0; index < lemmas.length; index++) {
   info.forEach((inf) => {
     const gender = [];
 
-    const { pos, senses, sounds, categories } = inf;
+    const { pos, senses, sounds, categories, head_templates } = inf;
+
+    const aspectInfo = { pf: '', impf: '' };
+
+    if (pos === 'verb' && head_templates) {
+      head_templates.forEach((head) => {
+        // if (word == 'дать') console.log(head);
+
+        const { args } = head;
+        const aspect = args['2'];
+        let { pf, impf } = args;
+
+        if (pf) pf = pf.replace(/́/g, '');
+        if (impf) impf = impf.replace(/́/g, '');
+
+        if (aspect == 'impf') {
+          aspectInfo['impf'] = word;
+          aspectInfo['pf'] = pf;
+        } else if (aspect == 'pf') {
+          aspectInfo['pf'] = word;
+          aspectInfo['impf'] = impf;
+        }
+      });
+    }
 
     let nonLemmaAndLemma = false;
 
@@ -147,8 +170,18 @@ for (let index = 0; index < lemmas.length; index++) {
       });
 
       if (!result[word])
-        result[word] = [{ ipa, pos, defs, forms: outputForms, gender }];
-      else result[word].push({ ipa, pos, defs, forms: outputForms, gender });
+        result[word] = [
+          { ipa, pos, defs, forms: outputForms, gender, aspectInfo },
+        ];
+      else
+        result[word].push({
+          ipa,
+          pos,
+          defs,
+          forms: outputForms,
+          gender,
+          aspectInfo,
+        });
     }
   });
 }
@@ -161,5 +194,6 @@ for (let index = 0; index < lemmas.length; index++) {
 //   'бережёного бог бережёт\n',
 //   result['бережёного бог бережёт'][0].forms,
 // );
+// console.log('прийти\n', result['прийти'][0]);
 
 fs.writeFileSync('ru-en-wiktionary-dict.json', JSON.stringify(result));
